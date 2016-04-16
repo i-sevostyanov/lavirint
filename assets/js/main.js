@@ -57,18 +57,19 @@ var PhaserGame = function (game) {
     this.justTransfered = false;
 
     this.gameLevel = [
-        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 10, 0, 0, 0, 9, 0, 8, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 2, 0, 1, 1, 1, 0, 7, 0, 0, 0, 0, 4, 0, 0, 0, 0],
-        [1, 9, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 15, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 9, 1, 1, 1, 0, 9, 0, 0, 0, 0, 0, 0],
-        [0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    //   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 1
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 2
+        [0, 0, 0, 0, 0, 9, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 3
+        [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 4
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], // 5
+        [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 9, 0, 0, 0, 0, 1, 0], // 6
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // 7
+        [0, 0, 0, 0, 1, 0, 0, 9, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0], // 8
+        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3, 4, 0, 0], // 9
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 10
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 11
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  // 12
     ];
 
     this.blocksHandlerPreOverlap = function (player, block) {
@@ -225,7 +226,6 @@ PhaserGame.prototype = {
                         object.body.collideWorldBounds = true;
                         object.anchor.setTo(0.5, 0.5);
                         object.name = 'player';
-                        //object.dirty = true;
                         this.player = new Player(object);
                         break;
                     case 3:
@@ -317,15 +317,17 @@ PhaserGame.prototype = {
             }
         }
 
-        var tx = this.teleports[0].x;
-        var ty = this.teleports[0].y;
+        if (this.teleports[0]) {
+            var tx = this.teleports[0].x;
+            var ty = this.teleports[0].y;
 
-        this.transfers[tx + 'x' + ty] = this.teleports[1];
+            this.transfers[tx + 'x' + ty] = this.teleports[1];
 
-        tx = this.teleports[1].x;
-        ty = this.teleports[1].y;
+            tx = this.teleports[1].x;
+            ty = this.teleports[1].y;
 
-        this.transfers[tx + 'x' + ty] = this.teleports[0];
+            this.transfers[tx + 'x' + ty] = this.teleports[0];
+        }
 
         this.cursors = this.input.keyboard.createCursorKeys();
     },
@@ -335,7 +337,6 @@ PhaserGame.prototype = {
 
         game.physics.arcade.overlap(this.player.gameObject, this.blocks, this.blocksHandlerOverlap, this.blocksHandlerPreOverlap, this);
         game.physics.arcade.collide(this.player.gameObject, this.blocks, this.blocksHandlerCollide, null, this);
-        game.physics.arcade.collide(this.player.gameObject, this.blocks);
 
         if (!this.player.getBody().velocity.y && !this.player.getBody().velocity.x) {
             if (this.cursors.down.isDown) {
