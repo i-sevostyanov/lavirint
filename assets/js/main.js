@@ -26,12 +26,14 @@ var PhaserGame = function (game) {
     this.player = null;
     this.finish = null;
 
+    this.cursors = null;
+
     this.gameLevel = [
+        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -43,8 +45,24 @@ var PhaserGame = function (game) {
 
 
     this.finishHandler = function (player, finish) {
-        if (Math.round(player.position.x / 10) == Math.round(finish.position.x / 10) && Math.round(player.position.y / 10) == Math.round(finish.position.y / 10)) {
+        if (Math.round(player.position.x / 10) == Math.round((finish.position.x + 32) / 10)
+            && Math.round(player.position.y / 10) == Math.round((finish.position.y + 32) / 10)) {
             finish.kill();
+        }
+    };
+
+    this.triangleHandler = function (player, triangle) {
+        if (Math.round(player.position.x / 10) == Math.round((triangle.position.x + 32) / 10)
+            && Math.round(player.position.y / 10) == Math.round((triangle.position.y + 32) / 10)) {
+            if (player.body.velocity.x) {
+                //player.body.velocity.y = -player.body.velocity.x;
+                player.body.velocity.x = 0;
+            } else {
+                //player.body.velocity.x = -player.body.velocity.y;
+                player.body.velocity.y = 0;
+            }
+            player.position.x = triangle.position.x + 32;
+            player.position.y = triangle.position.y + 32;
         }
     }
 };
@@ -59,7 +77,10 @@ PhaserGame.prototype = {
         this.load.image('grid', 'assets/img/grid.png');
         this.load.image('block', 'assets/img/block.png');
         this.load.image('player', 'assets/img/player.png');
-        this.load.image('triangle', 'assets/img/triangle.png');
+        this.load.image('triangle0', 'assets/img/triangle00.png');
+        this.load.image('triangle1', 'assets/img/triangle01.png');
+        this.load.image('triangle2', 'assets/img/triangle02.png');
+        this.load.image('triangle3', 'assets/img/triangle03.png');
     },
 
     create: function () {
@@ -75,9 +96,10 @@ PhaserGame.prototype = {
                         this.blocks.create(j * 64, i * 64, 'block').body.immovable = true;
                         break;
                     case 2:
-                        this.player = this.add.sprite(j * 64, i * 64, 'player');
+                        this.player = this.add.sprite(j * 64 + 32, i * 64 + 32, 'player');
                         this.physics.arcade.enable(this.player);
                         this.player.body.collideWorldBounds = true;
+                        this.player.anchor = new PIXI.Point(0.5, 0.5);
                         break;
                     case 3:
                         this.finish = this.add.group();
@@ -88,10 +110,22 @@ PhaserGame.prototype = {
                     case 5: // triangle right-bottom
                     case 6: // triangle bottom-left
                     case 7: // triangle left-top
-                        var rotation = (this.gameLevel[i][j] - 4) * 90;
-                        var x = j * 64;
-                        var y = i * 64;
-                        this.triangles.create(x, y, 'triangle').angle = rotation;
+                        var rotate = this.gameLevel[i][j] - 4;
+                        var triangle = this.triangles.create(j * 64, i * 64, 'triangle'+rotate);
+                        triangle.body.immovable = true;
+                        if (rotate == 0) {
+                            triangle.body.checkCollision.up = false;
+                            triangle.body.checkCollision.left = false;
+                        } else if (rotate == 1) {
+                            triangle.body.checkCollision.down = false;
+                            triangle.body.checkCollision.left = false;
+                        } else if (rotate == 2) {
+                            triangle.body.checkCollision.down = false;
+                            triangle.body.checkCollision.right = false;
+                        } else {
+                            triangle.body.checkCollision.up = false;
+                            triangle.body.checkCollision.right = false;
+                        }
                         break;
                 }
             }
@@ -203,6 +237,8 @@ PhaserGame.prototype = {
     },
 
     update: function () {
+        game.physics.arcade.overlap(this.player, this.triangles, this.triangleHandler, null, this);
+        game.physics.arcade.collide(this.player, this.triangles);
 
         if (!this.player.body.velocity.y && !this.player.body.velocity.x) {
             if (cursors.down.isDown) {
