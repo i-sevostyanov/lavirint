@@ -53,20 +53,22 @@ var PhaserGame = function (game) {
     this.bombTimer = 9;
 
     this.teleports = [];
+    this.transfers = [];
+    this.justTransfered = false;
 
     this.gameLevel = [
         [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 9, 0, 8, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 10, 0, 0, 0, 9, 0, 8, 1],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 1, 1, 1, 0, 7, 0, 0, 0, 0, 4, 0, 0, 0, 0],
-        [1, 9, 16, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0],
+        [1, 0, 2, 0, 1, 1, 1, 0, 7, 0, 0, 0, 0, 4, 0, 0, 0, 0],
+        [1, 9, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 15, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 9, 1, 1, 1, 0, 9, 0, 11, 0, 0, 0, 12],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 14, 0, 0, 0, 13]
+        [0, 0, 0, 0, 0, 0, 9, 1, 1, 1, 0, 9, 0, 0, 0, 0, 0, 0],
+        [0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
     this.blocksHandlerPreOverlap = function (player, block) {
@@ -130,9 +132,17 @@ var PhaserGame = function (game) {
                 console.log(this.score);
                 break;
             case 'teleport':
-                //player.body.velocity.x = -player.body.velocity.y;
-                //player.body.velocity.y = 0;
-                //this.player.setDirection(Phaser.RIGHT);
+
+                if (!this.justTransfered) {
+                    var sx = Math.floor(block.body.position.x / this.gridsize) * this.gridsize;
+                    var sy = Math.floor(block.body.position.y / this.gridsize) * this.gridsize;
+                    var key = sx + 'x' + sy;
+
+                    player.body.position.x = this.transfers[key].x;
+                    player.body.position.y = this.transfers[key].y;
+                    this.justTransfered = true;
+                }
+
                 break;
             case 'arrows':
                 if (block.angle == 0) {
@@ -185,6 +195,7 @@ PhaserGame.prototype = {
         this.load.image('block', 'assets/img/block.png');
         this.load.image('player', 'assets/img/player.png');
         this.load.image('finish', 'assets/img/finish.png');
+        this.load.image('teleport', 'assets/img/teleport.png');
         this.load.image('key', 'assets/img/key.png');
         this.load.image('triangle0', 'assets/img/triangle00.png');
         this.load.image('triangle1', 'assets/img/triangle01.png');
@@ -263,7 +274,10 @@ PhaserGame.prototype = {
                         object.body.checkCollision.right = false;
                         break;
                     case 10:
-                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'teleport');
+                        var x = j * this.gridsize;
+                        var y = i * this.gridsize;
+                        this.teleports.push({x: x, y: y});
+                        object = this.blocks.create(x, y, 'teleport');
                         object.name = 'teleport';
                         object.body.checkCollision.up = false;
                         object.body.checkCollision.left = false;
@@ -303,10 +317,22 @@ PhaserGame.prototype = {
             }
         }
 
+        var tx = this.teleports[0].x;
+        var ty = this.teleports[0].y;
+
+        this.transfers[tx + 'x' + ty] = this.teleports[1];
+
+        tx = this.teleports[1].x;
+        ty = this.teleports[1].y;
+
+        this.transfers[tx + 'x' + ty] = this.teleports[0];
+
         this.cursors = this.input.keyboard.createCursorKeys();
     },
 
     update: function () {
+        this.justTransfered = false;
+
         game.physics.arcade.overlap(this.player.gameObject, this.blocks, this.blocksHandlerOverlap, this.blocksHandlerPreOverlap, this);
         game.physics.arcade.collide(this.player.gameObject, this.blocks, this.blocksHandlerCollide, null, this);
         game.physics.arcade.collide(this.player.gameObject, this.blocks);
