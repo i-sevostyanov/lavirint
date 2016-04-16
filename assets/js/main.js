@@ -16,6 +16,8 @@ var PhaserGame = function (game) {
 
     this.cursors = null;
 
+    this.blocks = null;
+
     this.bombTimer = 9;
 
     this.gameLevel = [
@@ -33,7 +35,7 @@ var PhaserGame = function (game) {
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
-    this.interactiveHandlerOverlap = function (player, block) {
+    this.blocksHandlerOverlap = function (player, block) {
         if (Math.round(player.position.x / 10) != Math.round((block.position.x + this.gridsize / 2) / 10)
             || Math.round(player.position.y / 10) != Math.round((block.position.y + this.gridsize / 2) / 10)) return;
         switch (block.name) {
@@ -55,7 +57,7 @@ var PhaserGame = function (game) {
         }
     };
 
-    this.interactiveHandlerCollide = function (player, block) {
+    this.blocksHandlerCollide = function (player, block) {
         switch (block.name) {
             case 'bomb':
                 block.name = 'bombWithTimer';
@@ -96,8 +98,6 @@ PhaserGame.prototype = {
         this.add.sprite(0, 0, 'grid');
         this.blocks = this.add.group();
         this.blocks.enableBody = true;
-        this.interactive = this.add.group();
-        this.interactive.enableBody = true;
         var object;
         for (var i = 0; i < 12; i++) {
             for (var j = 0; j < 18; j++) {
@@ -112,7 +112,7 @@ PhaserGame.prototype = {
                         this.player.anchor.setTo(0.5, 0.5);
                         break;
                     case 3:
-                        object = this.interactive.create(j * this.gridsize, i * this.gridsize, 'finish');
+                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'finish');
                         object.name = 'finish';
                         object.body.checkCollision.up = false;
                         object.body.checkCollision.left = false;
@@ -124,7 +124,7 @@ PhaserGame.prototype = {
                     case 6: // triangle bottom-left
                     case 7: // triangle left-top
                         var rotate = this.gameLevel[i][j] - 4;
-                        object = this.interactive.create(j * this.gridsize, i * this.gridsize, 'triangle'+rotate);
+                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'triangle'+rotate);
 
                         if (rotate == 0) {
                             object.body.checkCollision.up = false;
@@ -143,7 +143,7 @@ PhaserGame.prototype = {
                         object.body.immovable = true;
                         break;
                     case 8:
-                        object = this.interactive.create(j * this.gridsize, i * this.gridsize, 'bomb');
+                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'bomb');
                         object.name = 'bomb';
                         object.body.immovable = true;
                         break;
@@ -155,8 +155,8 @@ PhaserGame.prototype = {
     },
 
     update: function () {
-        game.physics.arcade.overlap(this.player, this.interactive, this.interactiveHandlerOverlap, null, this);
-        game.physics.arcade.collide(this.player, this.interactive, this.interactiveHandlerCollide, null, this);
+        game.physics.arcade.overlap(this.player, this.blocks, this.blocksHandlerOverlap, null, this);
+        game.physics.arcade.collide(this.player, this.blocks, this.blocksHandlerCollide, null, this);
         game.physics.arcade.collide(this.player, this.blocks);
 
         if (!this.player.body.velocity.y && !this.player.body.velocity.x) {
