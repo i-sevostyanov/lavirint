@@ -41,23 +41,28 @@ var PhaserGame = function (game) {
 
     this.player = null;
 
+    this.score = 0;
+    this.keys = 0;
+
     this.cursors = null;
 
     this.blocks = null;
 
     this.bombTimer = 9;
 
+    this.teleports = [];
+
     this.gameLevel = [
         [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 1],
+        [0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 9, 0, 8, 1],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 1, 1, 1, 0, 6, 0, 2, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1, 1, 1, 0, 7, 0, 2, 0, 0, 4, 0, 0, 0, 0],
+        [1, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 9, 1, 1, 1, 0, 9, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
@@ -70,46 +75,79 @@ var PhaserGame = function (game) {
                 player.position.x -= dX;
                 player.position.y -= dY;
             }
-            console.log('YEAH!', player.body.position, player.body._dx, player.body._dy);
             return true;
         }
-        console.log(player.body.position, player.body._dx, player.body._dy);
         return false;
     };
 
     this.blocksHandlerOverlap = function (player, block) {
-        //if (Phaser.Math.distancePow(player.position.x, player.position.y, block.body.center.x, block.body.center.y, 1))
-        //console.log(Phaser.Math.distance(player.position.x, player.position.y, block.body.center.x, block.body.center.y))
-
-        //if (Math.round(player.position.x / 10) != Math.round(block.body.center.x / 10)
-        //    || player.position.y - player.body.newVelocity.y != block.body.center.y) return;
-
-        //if (player.position.x != block.body.center.x
-        // || player.position.y != block.body.center.y) return;
 
         switch (block.name) {
-            case 'triangle':
+            case 'triangle0':
                 if (player.body.velocity.x != 0) {
                     player.body.velocity.y = -player.body.velocity.x;
                     player.body.velocity.x = 0;
+                    this.player.setDirection(Phaser.UP);
                 } else {
                     player.body.velocity.x = -player.body.velocity.y;
                     player.body.velocity.y = 0;
+                    this.player.setDirection(Phaser.LEFT);
                 }
-
-                /*if (player.body.velocity.y == 0) {
-                    player.position.y = block.body.center.y - player.body.newVelocity.y;
-                }*/
-
-                /*if (player.body.velocity.x == 0) {
-                    player.position.x = block.body.center.x - player.body.newVelocity.x;
-                }*/
-
+                return false;
+                break;
+            case 'triangle1':
+                if (player.body.velocity.x != 0) {
+                    player.body.velocity.y = -player.body.velocity.x;
+                    player.body.velocity.x = 0;
+                    this.player.setDirection(Phaser.DOWN);
+                } else {
+                    player.body.velocity.x = -player.body.velocity.y;
+                    player.body.velocity.y = 0;
+                    this.player.setDirection(Phaser.LEFT);
+                }
+                return false;
+                break;
+            case 'triangle2':
+                if (player.body.velocity.x != 0) {
+                    player.body.velocity.y = -player.body.velocity.x;
+                    player.body.velocity.x = 0;
+                    this.player.setDirection(Phaser.DOWN);
+                } else {
+                    player.body.velocity.x = -player.body.velocity.y;
+                    player.body.velocity.y = 0;
+                    this.player.setDirection(Phaser.RIGHT);
+                }
+                return false;
+                break;
+            case 'triangle3':
+                if (player.body.velocity.x != 0) {
+                    player.body.velocity.y = -player.body.velocity.x;
+                    player.body.velocity.x = 0;
+                    this.player.setDirection(Phaser.UP);
+                } else {
+                    player.body.velocity.x = -player.body.velocity.y;
+                    player.body.velocity.y = 0;
+                    this.player.setDirection(Phaser.RIGHT);
+                }
                 return false;
                 break;
             case 'finish':
+
+                if (this.score == this.keys) {
+                    block.kill();
+                    console.log('Вы победили!');
+                }
+
+                break;
+            case 'key':
+                this.score++;
                 block.kill();
-                console.log('Вы победили!');
+                console.log(this.score);
+                break;
+            case 'teleport':
+                //player.body.velocity.x = -player.body.velocity.y;
+                //player.body.velocity.y = 0;
+                //this.player.setDirection(Phaser.RIGHT);
                 break;
         }
     };
@@ -147,7 +185,8 @@ PhaserGame.prototype = {
         this.load.image('grid', 'assets/img/grid.png');
         this.load.image('block', 'assets/img/block.png');
         this.load.image('player', 'assets/img/player.png');
-        this.load.image('finish', 'assets/img/player.png');
+        this.load.image('finish', 'assets/img/finish.png');
+        this.load.image('key', 'assets/img/key.png');
         this.load.image('triangle0', 'assets/img/triangle00.png');
         this.load.image('triangle1', 'assets/img/triangle01.png');
         this.load.image('triangle2', 'assets/img/triangle02.png');
@@ -206,7 +245,7 @@ PhaserGame.prototype = {
                             object.body.checkCollision.up = false;
                             object.body.checkCollision.right = false;
                         }
-                        object.name = 'triangle';
+                        object.name = 'triangle'+rotate;
                         object.body.immovable = true;
                         break;
                     case 8:
@@ -214,6 +253,26 @@ PhaserGame.prototype = {
                         object.body.setSize(62, 62, 1, 1);
                         object.name = 'bomb';
                         object.body.immovable = true;
+                        break;
+                    case 9:
+                        this.keys++;
+                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'key');
+                        object.body.setSize(62, 62, 1, 1);
+                        object.name = 'key';
+                        object.body.checkCollision.up = false;
+                        object.body.checkCollision.left = false;
+                        object.body.checkCollision.down = false;
+                        object.body.checkCollision.right = false;
+                        break;
+                    case 10:
+
+                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'teleport');
+                        object.body.setSize(62, 62, 1, 1);
+                        object.name = 'teleport';
+                        object.body.checkCollision.up = false;
+                        object.body.checkCollision.left = false;
+                        object.body.checkCollision.down = false;
+                        object.body.checkCollision.right = false;
                         break;
                 }
             }
