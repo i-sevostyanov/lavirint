@@ -1,5 +1,35 @@
 var game = new Phaser.Game(1152, 768, Phaser.CANVAS, 'game');
 
+var Player = function (player) {
+    this.gameObject = player;
+    this.playerSpeed = 600;
+
+    this.setDirection = function(direction) {
+        switch (direction) {
+            case Phaser.UP:
+                this.gameObject.body.velocity.y = -this.playerSpeed;
+                this.gameObject.angle = -90;
+                break;
+            case Phaser.DOWN:
+                this.gameObject.body.velocity.y = this.playerSpeed;
+                this.gameObject.angle = 90;
+                break;
+            case Phaser.LEFT:
+                this.gameObject.body.velocity.x = -this.playerSpeed;
+                this.gameObject.angle = 180;
+                break;
+            case Phaser.RIGHT:
+                this.gameObject.body.velocity.x = this.playerSpeed;
+                this.gameObject.angle = 0;
+                break;
+        }
+    };
+
+    this.getBody = function() {
+        return this.gameObject.body;
+    }
+};
+
 var PhaserGame = function (game) {
     this.map = null;
     this.layer = null;
@@ -7,11 +37,8 @@ var PhaserGame = function (game) {
 
     this.gridsize = 64;
 
-    this.speed = 150;
-
     this.current = Phaser.UP;
 
-    this.playerSpeed = 600;
     this.player = null;
 
     this.cursors = null;
@@ -22,12 +49,12 @@ var PhaserGame = function (game) {
 
     this.gameLevel = [
         [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 8, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 1],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1, 1, 1, 0, 6, 0, 2, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 0, 0, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -35,20 +62,50 @@ var PhaserGame = function (game) {
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
+    this.blocksHandlerOverlap2 = function (player, block) {
+        var dX = player.body.position.x - block.body.position.x;
+        var dY = player.body.position.y - block.body.position.y;
+        if (Math.abs(dX) < 6  && Math.abs(dY) < 6) {
+            if (dX != 0 || dY != 0) {
+                player.position.x -= dX;
+                player.position.y -= dY;
+            }
+            console.log('YEAH!', player.body.position, player.body._dx, player.body._dy);
+            return true;
+        }
+        console.log(player.body.position, player.body._dx, player.body._dy);
+        return false;
+    };
+
     this.blocksHandlerOverlap = function (player, block) {
-        if (Math.round(player.position.x / 10) != Math.round((block.position.x + this.gridsize / 2) / 10)
-            || Math.round(player.position.y / 10) != Math.round((block.position.y + this.gridsize / 2) / 10)) return;
+        //if (Phaser.Math.distancePow(player.position.x, player.position.y, block.body.center.x, block.body.center.y, 1))
+        //console.log(Phaser.Math.distance(player.position.x, player.position.y, block.body.center.x, block.body.center.y))
+
+        //if (Math.round(player.position.x / 10) != Math.round(block.body.center.x / 10)
+        //    || player.position.y - player.body.newVelocity.y != block.body.center.y) return;
+
+        //if (player.position.x != block.body.center.x
+        // || player.position.y != block.body.center.y) return;
+
         switch (block.name) {
             case 'triangle':
-                if (player.body.velocity.x) {
-                    //player.body.velocity.y = -player.body.velocity.x;
+                if (player.body.velocity.x != 0) {
+                    player.body.velocity.y = -player.body.velocity.x;
                     player.body.velocity.x = 0;
                 } else {
-                    //player.body.velocity.x = -player.body.velocity.y;
+                    player.body.velocity.x = -player.body.velocity.y;
                     player.body.velocity.y = 0;
                 }
-                player.position.x = block.position.x + this.gridsize / 2;
-                player.position.y = block.position.y + this.gridsize / 2;
+
+                /*if (player.body.velocity.y == 0) {
+                    player.position.y = block.body.center.y - player.body.newVelocity.y;
+                }*/
+
+                /*if (player.body.velocity.x == 0) {
+                    player.position.x = block.body.center.x - player.body.newVelocity.x;
+                }*/
+
+                return false;
                 break;
             case 'finish':
                 block.kill();
@@ -73,6 +130,10 @@ var PhaserGame = function (game) {
                 }, 1000);
                 break;
         }
+    };
+
+    this.setDirection = function (direction) {
+
     }
 };
 
@@ -103,13 +164,18 @@ PhaserGame.prototype = {
             for (var j = 0; j < 18; j++) {
                 switch (this.gameLevel[i][j]) {
                     case 1:
-                        this.blocks.create(j * this.gridsize, i * this.gridsize, 'block').body.immovable = true;
+                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'block');
+                        object.body.name = 'block';
+                        object.body.immovable = true;
                         break;
                     case 2:
-                        this.player = this.add.sprite(j * this.gridsize + this.gridsize / 2, i * this.gridsize + this.gridsize / 2, 'player');
-                        this.physics.arcade.enable(this.player);
-                        this.player.body.collideWorldBounds = true;
-                        this.player.anchor.setTo(0.5, 0.5);
+                        object = this.add.sprite(j * this.gridsize + this.gridsize / 2, i * this.gridsize + this.gridsize / 2, 'player');
+                        this.physics.arcade.enable(object);
+                        object.body.collideWorldBounds = true;
+                        object.anchor.setTo(0.5, 0.5);
+                        object.name = 'player';
+                        //object.dirty = true;
+                        this.player = new Player(object);
                         break;
                     case 3:
                         object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'finish');
@@ -125,6 +191,7 @@ PhaserGame.prototype = {
                     case 7: // triangle left-top
                         var rotate = this.gameLevel[i][j] - 4;
                         object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'triangle'+rotate);
+                        //object.body.setSize(64, 0, 0, 0);
 
                         if (rotate == 0) {
                             object.body.checkCollision.up = false;
@@ -144,6 +211,7 @@ PhaserGame.prototype = {
                         break;
                     case 8:
                         object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'bomb');
+                        object.body.setSize(62, 62, 1, 1);
                         object.name = 'bomb';
                         object.body.immovable = true;
                         break;
@@ -155,26 +223,22 @@ PhaserGame.prototype = {
     },
 
     update: function () {
-        game.physics.arcade.overlap(this.player, this.blocks, this.blocksHandlerOverlap, null, this);
-        game.physics.arcade.collide(this.player, this.blocks, this.blocksHandlerCollide, null, this);
-        game.physics.arcade.collide(this.player, this.blocks);
+        game.physics.arcade.overlap(this.player.gameObject, this.blocks, this.blocksHandlerOverlap, this.blocksHandlerOverlap2, this);
+        game.physics.arcade.collide(this.player.gameObject, this.blocks, this.blocksHandlerCollide, null, this);
+        game.physics.arcade.collide(this.player.gameObject, this.blocks);
 
-        if (!this.player.body.velocity.y && !this.player.body.velocity.x) {
+        if (!this.player.getBody().velocity.y && !this.player.getBody().velocity.x) {
             if (this.cursors.down.isDown) {
-                this.player.body.velocity.y = this.playerSpeed;
-                this.player.angle = 90;
+                this.player.setDirection(Phaser.DOWN);
             }
             else if (this.cursors.up.isDown) {
-                this.player.body.velocity.y = -this.playerSpeed;
-                this.player.angle = -90;
+                this.player.setDirection(Phaser.UP);
             }
             else if (this.cursors.left.isDown) {
-                this.player.body.velocity.x = -this.playerSpeed;
-                this.player.angle = 180;
+                this.player.setDirection(Phaser.LEFT);
             }
             else if (this.cursors.right.isDown) {
-                this.player.body.velocity.x = this.playerSpeed;
-                this.player.angle = 0;
+                this.player.setDirection(Phaser.RIGHT);
             }
         }
     }
