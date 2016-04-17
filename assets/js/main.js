@@ -1,8 +1,95 @@
-var game = new Phaser.Game(1152, 768, Phaser.CANVAS, 'game');
+var game = new Phaser.Game(1152, 868, Phaser.CANVAS, 'game');
 
 var GameConsts = {
     gridsize: 64,
     bombTimer: 9
+};
+
+var Results = function () {
+    var records = [];
+    var lastLevel = localStorage.getItem('lastLevel');
+    if (lastLevel != null) {
+        lastLevel*=1;
+        records = JSON.parse(localStorage.getItem('records'));
+    } else {
+        lastLevel = 0;
+    }
+
+    var saveResult = function() {
+        localStorage.setItem('records', JSON.stringify(records));
+        localStorage.setItem('lastLevel', lastLevel);
+    };
+
+    this.levelRecord = function (level, result) {
+        if (result == undefined) return records[level];
+        if (records[level] == undefined || result < records[level]) {
+            records[level] = result.toFixed(2);
+            saveResult();
+        }
+    };
+
+    this.lastLevel = function (level) {
+        if (level == undefined) return lastLevel;
+        lastLevel = level;
+        saveResult();
+    }
+};
+
+var bottomMenu = function (maxKeys, level, maxLevel, record) {
+    var keysText = null;
+    var timeText = null;
+    var levelText = null;
+    var recordText = null;
+
+    var keys = maxKeys;
+
+    var time = 0;
+
+    var timer = null;
+
+    create(level+1, maxLevel, record);
+
+    game.add.text(1050, 780, 'Сброс: [R]', { font: "18px Arial", fill: "#fff", align: "center" });
+
+    function create(level, maxLevel, record) {
+        if (record == undefined) {
+            record = 0;
+        }
+
+        keysText = game.add.text(10, 780, 'Ключи: 0/' + keys, { font: "18px Arial", fill: "#fff", align: "center" });
+        timeText = game.add.text(10, 805, 'Время: 0', { font: "18px Arial", fill: "#fff", align: "center" });
+        recordText = game.add.text(150, 805, 'Рекорд: ' + record, { font: "18px Arial", fill: "#fff", align: "center" });
+        levelText = game.add.text(10, 830, 'Уровень: ' + level + '/' + maxLevel, { font: "18px Arial", fill: "#fff", align: "center" });
+
+        timer = game.time.create(false);
+        timer.loop(5, function() {
+            time += 0.01;
+            timeText.setText('Время: ' + time.toFixed(2));
+        }, this);
+        timer.start();
+    }
+
+    this.reset = function (maxKeys, level, maxLevel, record) {
+        keysText.kill();
+        timeText.kill();
+        levelText.kill();
+        recordText.kill();
+
+        keys = maxKeys;
+        time = 0;
+
+        timer.stop();
+
+        create(level+1, maxLevel, record);
+    };
+
+    this.updateKeys = function(value) {
+        keysText.setText('Ключи: ' + value + '/' + keys);
+    };
+
+    this.getTime = function() {
+        return time;
+    };
 };
 
 var Player = function (player) {
@@ -52,12 +139,14 @@ var PhaserGame = function (game) {
     this.layer = null;
     this.player = null;
 
+    this.results = new Results();
+
     this.current = Phaser.UP;
 
     this.player = null;
 
-    this.score = 0;
     this.keys = 0;
+    this.maxKeys = 0;
 
     this.cursors = null;
 
@@ -67,9 +156,24 @@ var PhaserGame = function (game) {
     this.transfers = [];
     this.justTransfered = false;
 
-    this.level = 0;
+    this.bottomMenu = null;
 
     this.gameLevels = [
+        [
+            //   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 1
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 2
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 3
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 4
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 5
+            [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 6
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 7
+            [0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 8
+            [0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 9
+            [0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 10
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 11
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  // 12
+        ],
         [
             //   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18
             [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 1
@@ -100,6 +204,9 @@ var PhaserGame = function (game) {
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ]
     ];
+
+    this.level = this.results.lastLevel();
+    if (this.level >= this.gameLevels.length) this.level = 0;
 
     this.blocksHandlerPreOverlap = function (player, block) {
         var dX = player.body.position.x - block.body.position.x;
@@ -154,16 +261,18 @@ var PhaserGame = function (game) {
                 return false;
                 break;
             case 'finish':
-                if (this.score == this.keys) {
+                if (this.keys == this.maxKeys) {
                     block.kill();
+                    this.results.levelRecord(this.level, this.bottomMenu.getTime());
                     this.level++;
+                    this.results.lastLevel(this.level);
                     this.create();
                 }
                 break;
             case 'key':
-                this.score++;
+                this.keys++;
+                this.bottomMenu.updateKeys(this.keys);
                 block.kill();
-                console.log(this.score);
                 break;
             case 'teleport':
 
@@ -235,144 +344,175 @@ PhaserGame.prototype = {
         game.load.spritesheet('teleport', 'assets/img/teleport2.png', 64, 64, 6);
     },
 
-    create: function () {
-        if (this.blocks) {
-            this.blocks.destroy();
-            this.player.gameObject.kill();
-        } else {
-            this.add.sprite(0, 0, 'grid');
-        }
-        this.blocks = this.add.group();
-        this.blocks.enableBody = true;
-        var object;
-        for (var i = 0; i < 12; i++) {
-            for (var j = 0; j < 18; j++) {
-                switch (this.gameLevels[this.level][i][j]) {
-                    case 1:
-                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'block');
-                        object.name = 'block';
-                        object.body.immovable = true;
-                        break;
-                    case 2:
-                        object = this.add.sprite(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'player');
-                        this.physics.arcade.enable(object);
-                        object.body.collideWorldBounds = true;
-                        object.anchor.setTo(0.5, 0.5);
-                        object.name = 'player';
-                        this.player = new Player(object);
-                        break;
-                    case 3:
-                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'finish');
-                        object.name = 'finish';
-                        object.body.checkCollision.up = false;
-                        object.body.checkCollision.left = false;
-                        object.body.checkCollision.down = false;
-                        object.body.checkCollision.right = false;
-                        break;
-                    case 4: // triangle top-right
-                    case 5: // triangle right-bottom
-                    case 6: // triangle bottom-left
-                    case 7: // triangle left-top
-                        var rotate = this.gameLevels[this.level][i][j] - 4;
-                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'triangle'+rotate);
-
-                        if (rotate == 0) {
-                            object.body.checkCollision.up = false;
-                            object.body.checkCollision.left = false;
-                        } else if (rotate == 1) {
-                            object.body.checkCollision.down = false;
-                            object.body.checkCollision.left = false;
-                        } else if (rotate == 2) {
-                            object.body.checkCollision.down = false;
-                            object.body.checkCollision.right = false;
-                        } else {
-                            object.body.checkCollision.up = false;
-                            object.body.checkCollision.right = false;
-                        }
-                        object.name = 'triangle'+rotate;
-                        object.body.immovable = true;
-                        break;
-                    case 8:
-                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'bomb');
-                        object.name = 'bomb';
-                        object.body.immovable = true;
-                        break;
-                    case 9:
-                        this.keys++;
-                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'key');
-                        object.name = 'key';
-                        object.body.checkCollision.up = false;
-                        object.body.checkCollision.left = false;
-                        object.body.checkCollision.down = false;
-                        object.body.checkCollision.right = false;
-                        break;
-                    case 10:
-                        var x = j * GameConsts.gridsize;
-                        var y = i * GameConsts.gridsize;
-                        this.teleports.push({x: x, y: y});
-                        object = this.blocks.create(x, y, 'teleport');
-                        var walk = object.animations.add('walk');
-
-                        //  And this starts the animation playing by using its key ("walk")
-                        //  30 is the frame rate (30fps)
-                        //  true means it will loop when it finishes
-                        object.animations.play('walk', 30, true);
-
-                        object.name = 'teleport';
-                        object.body.checkCollision.up = false;
-                        object.body.checkCollision.left = false;
-                        object.body.checkCollision.down = false;
-                        object.body.checkCollision.right = false;
-                        break;
-                    case 11:
-                    case 12:
-                    case 13:
-                    case 14:
-                        object = this.blocks.create(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'arrows');
-                        object.body.checkCollision.up = false;
-                        object.body.checkCollision.left = false;
-                        object.body.checkCollision.down = false;
-                        object.body.checkCollision.right = false;
-                        object.anchor.setTo(0.5, 0.5);
-                        object.angle = (this.gameLevels[this.level][i][j] - 11) * 90;
-                        object.name = 'arrows';
-                        object.body.immovable = true;
-                        break;
-                    case 15:
-                    case 16:
-                        object = this.blocks.create(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'tunnel');
-                        if (this.gameLevels[this.level][i][j] == 15) {
-                            object.body.checkCollision.up = false;
-                            object.body.checkCollision.down = false;
-                        } else {
-                            object.body.checkCollision.left = false;
-                            object.body.checkCollision.right = false;
-                            object.angle = 90;
-                        }
-                        object.anchor.setTo(0.5, 0.5);
-                        object.name = 'tunnel';
-                        object.body.immovable = true;
-                        break;
-                }
-            }
-        }
-
-        if (this.teleports[0]) {
-            var tx = this.teleports[0].x;
-            var ty = this.teleports[0].y;
-
-            this.transfers[tx + 'x' + ty] = this.teleports[1];
-
-            tx = this.teleports[1].x;
-            ty = this.teleports[1].y;
-
-            this.transfers[tx + 'x' + ty] = this.teleports[0];
-        }
-
-        this.cursors = this.input.keyboard.createCursorKeys();
+    setInputs: function () {
+        key = game.input.keyboard.addKey(Phaser.Keyboard.R);
+        key.onDown.add(this.create, this);
     },
 
-    update: function () {
+    create: function () {
+        if (this.level != -1) {
+            this.keys = 0;
+            this.maxKeys = 0;
+            if (this.blocks) {
+                this.blocks.destroy();
+                this.player.gameObject.kill();
+            } else {
+                this.add.sprite(0, 0, 'grid');
+                this.setInputs();
+            }
+            this.blocks = this.add.group();
+            this.blocks.enableBody = true;
+            var object;
+            for (var i = 0; i < 12; i++) {
+                for (var j = 0; j < 18; j++) {
+                    switch (this.gameLevels[this.level][i][j]) {
+                        case 1:
+                            object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'block');
+                            object.name = 'block';
+                            object.body.immovable = true;
+                            break;
+                        case 2:
+                            object = this.add.sprite(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'player');
+                            this.physics.arcade.enable(object);
+                            object.body.collideWorldBounds = true;
+                            object.anchor.setTo(0.5, 0.5);
+                            object.name = 'player';
+                            this.player = new Player(object);
+                            break;
+                        case 3:
+                            object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'finish');
+                            object.name = 'finish';
+                            object.body.checkCollision.up = false;
+                            object.body.checkCollision.left = false;
+                            object.body.checkCollision.down = false;
+                            object.body.checkCollision.right = false;
+                            break;
+                        case 4: // triangle top-right
+                        case 5: // triangle right-bottom
+                        case 6: // triangle bottom-left
+                        case 7: // triangle left-top
+                            var rotate = this.gameLevels[this.level][i][j] - 4;
+                            object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'triangle' + rotate);
+
+                            if (rotate == 0) {
+                                object.body.checkCollision.up = false;
+                                object.body.checkCollision.left = false;
+                            } else if (rotate == 1) {
+                                object.body.checkCollision.down = false;
+                                object.body.checkCollision.left = false;
+                            } else if (rotate == 2) {
+                                object.body.checkCollision.down = false;
+                                object.body.checkCollision.right = false;
+                            } else {
+                                object.body.checkCollision.up = false;
+                                object.body.checkCollision.right = false;
+                            }
+                            object.name = 'triangle' + rotate;
+                            object.body.immovable = true;
+                            break;
+                        case 8:
+                            object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'bomb');
+                            object.name = 'bomb';
+                            object.body.immovable = true;
+                            break;
+                        case 9:
+                            this.maxKeys++;
+                            object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'key');
+                            object.name = 'key';
+                            object.body.checkCollision.up = false;
+                            object.body.checkCollision.left = false;
+                            object.body.checkCollision.down = false;
+                            object.body.checkCollision.right = false;
+                            break;
+                        case 10:
+                            var x = j * GameConsts.gridsize;
+                            var y = i * GameConsts.gridsize;
+                            this.teleports.push({x: x, y: y});
+                            object = this.blocks.create(x, y, 'teleport');
+                            var walk = object.animations.add('walk');
+
+                            //  And this starts the animation playing by using its key ("walk")
+                            //  30 is the frame rate (30fps)
+                            //  true means it will loop when it finishes
+                            object.animations.play('walk', 30, true);
+
+                            object.name = 'teleport';
+                            object.body.checkCollision.up = false;
+                            object.body.checkCollision.left = false;
+                            object.body.checkCollision.down = false;
+                            object.body.checkCollision.right = false;
+                            break;
+                        case 11:
+                        case 12:
+                        case 13:
+                        case 14:
+                            object = this.blocks.create(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'arrows');
+                            object.body.checkCollision.up = false;
+                            object.body.checkCollision.left = false;
+                            object.body.checkCollision.down = false;
+                            object.body.checkCollision.right = false;
+                            object.anchor.setTo(0.5, 0.5);
+                            object.angle = (this.gameLevels[this.level][i][j] - 11) * 90;
+                            object.name = 'arrows';
+                            object.body.immovable = true;
+                            break;
+                        case 15:
+                        case 16:
+                            object = this.blocks.create(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'tunnel');
+                            if (this.gameLevels[this.level][i][j] == 15) {
+                                object.body.checkCollision.up = false;
+                                object.body.checkCollision.down = false;
+                            } else {
+                                object.body.checkCollision.left = false;
+                                object.body.checkCollision.right = false;
+                                object.angle = 90;
+                            }
+                            object.anchor.setTo(0.5, 0.5);
+                            object.name = 'tunnel';
+                            object.body.immovable = true;
+                            break;
+                    }
+                }
+            }
+
+            object = this.blocks.create(0, 768);
+            object.body.immovable = true;
+            object.name = 'bottomGround';
+            object.body.setSize(1152, 0, 0, 0);
+
+            if (this.teleports[0]) {
+                var tx = this.teleports[0].x;
+                var ty = this.teleports[0].y;
+
+                this.transfers[tx + 'x' + ty] = this.teleports[1];
+
+                tx = this.teleports[1].x;
+                ty = this.teleports[1].y;
+
+                this.transfers[tx + 'x' + ty] = this.teleports[0];
+            }
+
+            this.cursors = this.input.keyboard.createCursorKeys();
+
+            this.createBottomMenu();
+        } else {
+            this.createMenu();
+        }
+    },
+
+    createMenu: function () {
+
+    },
+
+    createBottomMenu: function () {
+        if (!this.bottomMenu) {
+            this.bottomMenu = new bottomMenu(this.maxKeys, this.level, this.gameLevels.length, this.results.levelRecord(this.level));
+        } else {
+            this.bottomMenu.reset(this.maxKeys, this.level, this.gameLevels.length, this.results.levelRecord(this.level));
+        }
+    },
+
+    update: function (g) {
         this.justTransfered = false;
 
         game.physics.arcade.overlap(this.player.gameObject, this.blocks, this.blocksHandlerOverlap, this.blocksHandlerPreOverlap, this);
