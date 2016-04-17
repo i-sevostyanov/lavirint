@@ -303,6 +303,8 @@ var PhaserGame = function (game) {
         //]
     ];
 
+    this.swipe = null;
+
     this.level = this.results.lastLevel();
     if (this.level >= this.gameLevels.length) this.level = 0;
 
@@ -476,6 +478,7 @@ PhaserGame.prototype = {
         if (this.blocks) {
             this.blocks.destroy();
             this.player.gameObject.kill();
+            this.swipe = new Swipe(this);
         } else {
             this.add.sprite(0, 0, 'grid');
         }
@@ -656,17 +659,35 @@ PhaserGame.prototype = {
 
         if (!this.player.getBody().velocity.y && !this.player.getBody().velocity.x) {
             this.player.normalizePosition();
-            if (this.cursors.down.isDown) {
-                this.player.setDirection(Phaser.DOWN);
-            }
-            else if (this.cursors.up.isDown) {
-                this.player.setDirection(Phaser.UP);
-            }
-            else if (this.cursors.left.isDown) {
-                this.player.setDirection(Phaser.LEFT);
-            }
-            else if (this.cursors.right.isDown) {
-                this.player.setDirection(Phaser.RIGHT);
+            var direction = this.swipe.check();
+            if (direction!==null) {
+                switch(direction.direction) {
+                    case this.swipe.DIRECTION_LEFT:
+                        this.player.setDirection(Phaser.LEFT);
+                        break;
+                    case this.swipe.DIRECTION_RIGHT:
+                        this.player.setDirection(Phaser.RIGHT);
+                        break;
+                    case this.swipe.DIRECTION_UP:
+                        this.player.setDirection(Phaser.UP);
+                        break;
+                    case this.swipe.DIRECTION_DOWN:
+                        this.player.setDirection(Phaser.DOWN);
+                        break;
+                }
+            } else {
+                if (this.cursors.down.isDown) {
+                    this.player.setDirection(Phaser.DOWN);
+                }
+                else if (this.cursors.up.isDown) {
+                    this.player.setDirection(Phaser.UP);
+                }
+                else if (this.cursors.left.isDown) {
+                    this.player.setDirection(Phaser.LEFT);
+                }
+                else if (this.cursors.right.isDown) {
+                    this.player.setDirection(Phaser.RIGHT);
+                }
             }
         }
     }
