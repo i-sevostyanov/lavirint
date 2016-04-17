@@ -478,9 +478,9 @@ PhaserGame.prototype = {
         if (this.blocks) {
             this.blocks.destroy();
             this.player.gameObject.kill();
-            this.swipe = new Swipe(this);
         } else {
             this.add.sprite(0, 0, 'grid');
+            this.swipe = new Swipe(this);
         }
         this.blocks = this.add.group();
         this.blocks.enableBody = true;
