@@ -2,7 +2,8 @@ var game = new Phaser.Game(1152, 868, Phaser.WEBGL, 'game');
 
 var GameConsts = {
     gridsize: 64,
-    bombTimer: 9
+    bombTimer: 9,
+    levelsInRow: 3
 };
 
 var Results = function () {
@@ -14,6 +15,7 @@ var Results = function () {
     } else {
         lastLevel = 0;
     }
+    lastLevel = -1;
 
     var saveResult = function() {
         localStorage.setItem('records', JSON.stringify(records));
@@ -327,6 +329,8 @@ PhaserGame.prototype = {
         this.physics.startSystem(Phaser.Physics.ARCADE);
 
         this.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
+
+        this.setInputs();
     },
 
     preload: function () {
@@ -345,14 +349,19 @@ PhaserGame.prototype = {
 
         //this.load.image('teleport', 'assets/img/teleport.png');
         this.load.spritesheet('teleport', 'assets/img/teleport2.png', 64, 64, 6);
+
+        this.load.spritesheet('button', 'assets/img/button.png', 80, 80, 3);
     },
 
     setInputs: function () {
         var key = this.input.keyboard.addKey(Phaser.Keyboard.R);
-        this.onDown.add(this.create, this);
+        key.onDown.add(this.create, this);
 
         key = this.input.keyboard.addKey(Phaser.Keyboard.F);
         key.onDown.add(this.fullScreen, this);
+
+        key = this.input.keyboard.addKey(Phaser.Keyboard.M);
+        key.onDown.add(this.openMenu, this);
     },
 
     fullScreen: function() {
@@ -375,7 +384,6 @@ PhaserGame.prototype = {
             this.player.gameObject.kill();
         } else {
             this.add.sprite(0, 0, 'grid');
-            this.setInputs();
         }
         this.blocks = this.add.group();
         this.blocks.enableBody = true;
@@ -514,9 +522,30 @@ PhaserGame.prototype = {
         this.createBottomMenu();
     },
 
+    openMenu: function () {
+        this.level = -1;
+        this.create();
+    },
+
     createMenu: function () {
-        game.add.text(150, 50, 'Lavirint', { font: "36px Arial", fill: "#fff", align: "center" });
-        game.add.text(150, 100, 'Выберите уровень: ', { font: "20px Arial", fill: "#fff", align: "center" });
+        this.add.text(150, 50, 'Lavirint', { font: "36px Arial", fill: "#fff", align: "center" });
+        this.add.text(150, 100, 'Выберите уровень: ', { font: "20px Arial", fill: "#fff", align: "center" });
+
+        var x,y;
+        for (var i = 0; i < this.gameLevels.length; i++) {
+            x = (i % GameConsts.levelsInRow) * 100;
+            y = Math.floor(i / GameConsts.levelsInRow) * 100;
+            this.add.button(x + 150, y + 170, 'button', this.openLevel, this, 1, 0, 2).name = 'button' + i;
+            this.add.text(x + 183, y + 185, i+1, { font: "30px Arial", fill: "#fff", align: "center" });
+            if (this.results.levelRecord(i)) {
+                this.add.text(x + 172, y + 215, this.results.levelRecord(i), {font: "15px Arial", fill: "#fff", align: "center"});
+            }
+        }
+    },
+
+    openLevel: function (button) {
+        this.level = button.name.replace('button', '');
+        this.create();
     },
 
     createBottomMenu: function () {
