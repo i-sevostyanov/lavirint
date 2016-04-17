@@ -67,20 +67,38 @@ var PhaserGame = function (game) {
     this.transfers = [];
     this.justTransfered = false;
 
-    this.gameLevel = [
-    //   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 1
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 2
-        [0, 0, 0, 0, 0, 9, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 3
-        [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 4
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], // 5
-        [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 9, 0, 0, 0, 0, 1, 0], // 6
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // 7
-        [0, 0, 0, 0, 1, 0, 0, 9, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0], // 8
-        [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3, 4, 0, 0], // 9
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 10
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 11
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  // 12
+    this.level = 0;
+
+    this.gameLevels = [
+        [
+            //   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 1
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 2
+            [0, 0, 0, 0, 0, 9, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 3
+            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 4
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], // 5
+            [0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 9, 0, 0, 0, 0, 1, 0], // 6
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], // 7
+            [0, 0, 0, 0, 1, 0, 0, 9, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0], // 8
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 3, 4, 0, 0], // 9
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 10
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // 11
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  // 12
+        ],
+        [
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 2, 12, 0, 0, 6, 0, 10, 0, 0, 0, 9, 0, 8, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 1, 1, 1, 0, 7, 0, 0, 0, 0, 4, 0, 0, 0, 0],
+            [1, 9, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 15, 3, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 9, 1, 1, 1, 0, 9, 0, 0, 0, 0, 0, 0],
+            [0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ]
     ];
 
     this.blocksHandlerPreOverlap = function (player, block) {
@@ -90,6 +108,11 @@ var PhaserGame = function (game) {
             if (dX != 0 || dY != 0) {
                 player.position.x -= dX;
                 player.position.y -= dY;
+
+                if (block.name == '') {
+                    player.body.position.x = Math.floor(player.body.position.x / this.gridsize) * this.gridsize;
+                    player.body.position.y = Math.floor(player.body.position.y / this.gridsize) * this.gridsize;
+                }
             }
             return true;
         }
@@ -133,7 +156,8 @@ var PhaserGame = function (game) {
             case 'finish':
                 if (this.score == this.keys) {
                     block.kill();
-                    console.log('Вы победили!');
+                    this.level++;
+
                 }
                 break;
             case 'key':
@@ -198,7 +222,6 @@ PhaserGame.prototype = {
         this.load.image('block', 'assets/img/block.png');
         this.load.image('player', 'assets/img/player.png');
         this.load.image('finish', 'assets/img/finish.png');
-        this.load.image('teleport', 'assets/img/teleport.png');
         this.load.image('key', 'assets/img/key.png');
         this.load.image('triangle0', 'assets/img/triangle00.png');
         this.load.image('triangle1', 'assets/img/triangle01.png');
@@ -207,6 +230,9 @@ PhaserGame.prototype = {
         this.load.image('bomb', 'assets/img/bomb.png');
         this.load.image('arrows', 'assets/img/arrows.png');
         this.load.image('tunnel', 'assets/img/tunnel.png');
+
+        //this.load.image('teleport', 'assets/img/teleport.png');
+        game.load.spritesheet('teleport', 'assets/img/teleport2.png', 64, 64, 6);
     },
 
     create: function () {
@@ -216,7 +242,7 @@ PhaserGame.prototype = {
         var object;
         for (var i = 0; i < 12; i++) {
             for (var j = 0; j < 18; j++) {
-                switch (this.gameLevel[i][j]) {
+                switch (this.gameLevels[this.level][i][j]) {
                     case 1:
                         object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'block');
                         object.name = 'block';
@@ -242,7 +268,7 @@ PhaserGame.prototype = {
                     case 5: // triangle right-bottom
                     case 6: // triangle bottom-left
                     case 7: // triangle left-top
-                        var rotate = this.gameLevel[i][j] - 4;
+                        var rotate = this.gameLevels[this.level][i][j] - 4;
                         object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'triangle'+rotate);
 
                         if (rotate == 0) {
@@ -280,6 +306,13 @@ PhaserGame.prototype = {
                         var y = i * GameConsts.gridsize;
                         this.teleports.push({x: x, y: y});
                         object = this.blocks.create(x, y, 'teleport');
+                        var walk = object.animations.add('walk');
+
+                        //  And this starts the animation playing by using its key ("walk")
+                        //  30 is the frame rate (30fps)
+                        //  true means it will loop when it finishes
+                        object.animations.play('walk', 30, true);
+
                         object.name = 'teleport';
                         object.body.checkCollision.up = false;
                         object.body.checkCollision.left = false;
@@ -296,14 +329,14 @@ PhaserGame.prototype = {
                         object.body.checkCollision.down = false;
                         object.body.checkCollision.right = false;
                         object.anchor.setTo(0.5, 0.5);
-                        object.angle = (this.gameLevel[i][j] - 11) * 90;
+                        object.angle = (this.gameLevels[this.level][i][j] - 11) * 90;
                         object.name = 'arrows';
                         object.body.immovable = true;
                         break;
                     case 15:
                     case 16:
                         object = this.blocks.create(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'tunnel');
-                        if (this.gameLevel[i][j] == 15) {
+                        if (this.gameLevels[this.level][i][j] == 15) {
                             object.body.checkCollision.up = false;
                             object.body.checkCollision.down = false;
                         } else {
