@@ -236,7 +236,12 @@ PhaserGame.prototype = {
     },
 
     create: function () {
-        this.add.sprite(0, 0, 'grid');
+        if (this.blocks) {
+            this.blocks.destroy();
+            this.player.gameObject.kill();
+        } else {
+            this.add.sprite(0, 0, 'grid');
+        }
         this.blocks = this.add.group();
         this.blocks.enableBody = true;
         var object;
