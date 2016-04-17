@@ -1,4 +1,4 @@
-var game = new Phaser.Game(1152, 868, Phaser.CANVAS, 'game');
+var game = new Phaser.Game(1152, 868, Phaser.WEBGL, 'game');
 
 var GameConsts = {
     gridsize: 64,
@@ -50,6 +50,7 @@ var bottomMenu = function (maxKeys, level, maxLevel, record) {
     create(level+1, maxLevel, record);
 
     game.add.text(1050, 780, 'Сброс: [R]', { font: "18px Arial", fill: "#fff", align: "center" });
+    game.add.text(986, 805, 'Полный экран: [F]', { font: "18px Arial", fill: "#fff", align: "center" });
 
     function create(level, maxLevel, record) {
         if (record == undefined) {
@@ -324,6 +325,8 @@ PhaserGame.prototype = {
 
     init: function () {
         this.physics.startSystem(Phaser.Physics.ARCADE);
+
+        this.scale.fullScreenScaleMode = Phaser.ScaleManager.SHOW_ALL;
     },
 
     preload: function () {
@@ -341,12 +344,23 @@ PhaserGame.prototype = {
         this.load.image('tunnel', 'assets/img/tunnel.png');
 
         //this.load.image('teleport', 'assets/img/teleport.png');
-        game.load.spritesheet('teleport', 'assets/img/teleport2.png', 64, 64, 6);
+        this.load.spritesheet('teleport', 'assets/img/teleport2.png', 64, 64, 6);
     },
 
     setInputs: function () {
-        key = game.input.keyboard.addKey(Phaser.Keyboard.R);
-        key.onDown.add(this.create, this);
+        var key = this.input.keyboard.addKey(Phaser.Keyboard.R);
+        this.onDown.add(this.create, this);
+
+        key = this.input.keyboard.addKey(Phaser.Keyboard.F);
+        key.onDown.add(this.fullScreen, this);
+    },
+
+    fullScreen: function() {
+        if (this.scale.isFullScreen) {
+            this.scale.stopFullScreen();
+        } else {
+            this.scale.startFullScreen(false);
+        }
     },
 
     create: function () {
@@ -501,7 +515,8 @@ PhaserGame.prototype = {
     },
 
     createMenu: function () {
-
+        game.add.text(150, 50, 'Lavirint', { font: "36px Arial", fill: "#fff", align: "center" });
+        game.add.text(150, 100, 'Выберите уровень: ', { font: "20px Arial", fill: "#fff", align: "center" });
     },
 
     createBottomMenu: function () {
@@ -512,7 +527,12 @@ PhaserGame.prototype = {
         }
     },
 
-    update: function (g) {
+    update: function () {
+        if (this.level == -1) {
+
+            return;
+        }
+
         this.justTransfered = false;
 
         game.physics.arcade.overlap(this.player.gameObject, this.blocks, this.blocksHandlerOverlap, this.blocksHandlerPreOverlap, this);
