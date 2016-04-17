@@ -15,6 +15,7 @@ var Results = function () {
     } else {
         lastLevel = -1;
     }
+    lastLevel = -1;
 
     var saveResult = function() {
         localStorage.setItem('records', JSON.stringify(records));
