@@ -1,5 +1,10 @@
 var game = new Phaser.Game(1152, 768, Phaser.CANVAS, 'game');
 
+var GameConsts = {
+    gridsize: 64,
+    bombTimer: 9
+};
+
 var Player = function (player) {
     this.gameObject = player;
     this.playerSpeed = 600;
@@ -29,6 +34,16 @@ var Player = function (player) {
 
     this.getBody = function() {
         return this.gameObject.body;
+    };
+
+    this.normalizePosition = function() {
+        var i = (this.getBody().center.x) / GameConsts.gridsize;
+        var j = (this.getBody().center.y) / GameConsts.gridsize;
+        if (i - Math.floor(i) != 0.5 && i - Math.floor(i) != 0
+            || j - Math.floor(j) != 0.5 && j - Math.floor(j) != 0) {
+            this.getBody().position.x = Math.floor(i) * GameConsts.gridsize;
+            this.getBody().position.y = Math.floor(j) * GameConsts.gridsize;
+        }
     }
 };
 
@@ -36,8 +51,6 @@ var PhaserGame = function (game) {
     this.map = null;
     this.layer = null;
     this.player = null;
-
-    this.gridsize = 64;
 
     this.current = Phaser.UP;
 
@@ -49,8 +62,6 @@ var PhaserGame = function (game) {
     this.cursors = null;
 
     this.blocks = null;
-
-    this.bombTimer = 9;
 
     this.teleports = [];
     this.transfers = [];
@@ -75,7 +86,7 @@ var PhaserGame = function (game) {
     this.blocksHandlerPreOverlap = function (player, block) {
         var dX = player.body.position.x - block.body.position.x;
         var dY = player.body.position.y - block.body.position.y;
-        if (Math.abs(dX) < 6  && Math.abs(dY) < 6) {
+        if (Math.abs(dX) < 6  && Math.abs(dY) < 6 && block.name != '') {
             if (dX != 0 || dY != 0) {
                 player.position.x -= dX;
                 player.position.y -= dY;
@@ -120,12 +131,10 @@ var PhaserGame = function (game) {
                 return false;
                 break;
             case 'finish':
-
                 if (this.score == this.keys) {
                     block.kill();
                     console.log('Вы победили!');
                 }
-
                 break;
             case 'key':
                 this.score++;
@@ -135,8 +144,8 @@ var PhaserGame = function (game) {
             case 'teleport':
 
                 if (!this.justTransfered) {
-                    var sx = Math.floor(block.body.position.x / this.gridsize) * this.gridsize;
-                    var sy = Math.floor(block.body.position.y / this.gridsize) * this.gridsize;
+                    var sx = Math.floor(block.body.position.x / GameConsts.gridsize) * GameConsts.gridsize;
+                    var sy = Math.floor(block.body.position.y / GameConsts.gridsize) * GameConsts.gridsize;
                     var key = sx + 'x' + sy;
 
                     player.body.position.x = this.transfers[key].x;
@@ -156,9 +165,6 @@ var PhaserGame = function (game) {
                     this.player.setDirection(Phaser.UP);
                 }
                 break;
-            case '':
-
-                break;
         }
     };
 
@@ -166,7 +172,7 @@ var PhaserGame = function (game) {
         switch (block.name) {
             case 'bomb':
                 block.name = 'bombWithTimer';
-                var time = this.bombTimer;
+                var time = GameConsts.bombTimer;
                 var text = game.add.text(block.position.x+33, block.position.y+21, time, { font: "26px Arial", fill: "#fff", align: "center" });
                 setInterval(function() {
                     time--;
@@ -179,10 +185,6 @@ var PhaserGame = function (game) {
                 break;
         }
     };
-
-    this.setDirection = function (direction) {
-
-    }
 };
 
 PhaserGame.prototype = {
@@ -216,12 +218,12 @@ PhaserGame.prototype = {
             for (var j = 0; j < 18; j++) {
                 switch (this.gameLevel[i][j]) {
                     case 1:
-                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'block');
-                        object.body.name = 'block';
+                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'block');
+                        object.name = 'block';
                         object.body.immovable = true;
                         break;
                     case 2:
-                        object = this.add.sprite(j * this.gridsize + this.gridsize / 2, i * this.gridsize + this.gridsize / 2, 'player');
+                        object = this.add.sprite(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'player');
                         this.physics.arcade.enable(object);
                         object.body.collideWorldBounds = true;
                         object.anchor.setTo(0.5, 0.5);
@@ -229,7 +231,7 @@ PhaserGame.prototype = {
                         this.player = new Player(object);
                         break;
                     case 3:
-                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'finish');
+                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'finish');
                         object.name = 'finish';
                         object.body.checkCollision.up = false;
                         object.body.checkCollision.left = false;
@@ -241,7 +243,7 @@ PhaserGame.prototype = {
                     case 6: // triangle bottom-left
                     case 7: // triangle left-top
                         var rotate = this.gameLevel[i][j] - 4;
-                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'triangle'+rotate);
+                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'triangle'+rotate);
 
                         if (rotate == 0) {
                             object.body.checkCollision.up = false;
@@ -260,13 +262,13 @@ PhaserGame.prototype = {
                         object.body.immovable = true;
                         break;
                     case 8:
-                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'bomb');
+                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'bomb');
                         object.name = 'bomb';
                         object.body.immovable = true;
                         break;
                     case 9:
                         this.keys++;
-                        object = this.blocks.create(j * this.gridsize, i * this.gridsize, 'key');
+                        object = this.blocks.create(j * GameConsts.gridsize, i * GameConsts.gridsize, 'key');
                         object.name = 'key';
                         object.body.checkCollision.up = false;
                         object.body.checkCollision.left = false;
@@ -274,8 +276,8 @@ PhaserGame.prototype = {
                         object.body.checkCollision.right = false;
                         break;
                     case 10:
-                        var x = j * this.gridsize;
-                        var y = i * this.gridsize;
+                        var x = j * GameConsts.gridsize;
+                        var y = i * GameConsts.gridsize;
                         this.teleports.push({x: x, y: y});
                         object = this.blocks.create(x, y, 'teleport');
                         object.name = 'teleport';
@@ -288,7 +290,7 @@ PhaserGame.prototype = {
                     case 12:
                     case 13:
                     case 14:
-                        object = this.blocks.create(j * this.gridsize + this.gridsize / 2, i * this.gridsize + this.gridsize / 2, 'arrows');
+                        object = this.blocks.create(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'arrows');
                         object.body.checkCollision.up = false;
                         object.body.checkCollision.left = false;
                         object.body.checkCollision.down = false;
@@ -300,7 +302,7 @@ PhaserGame.prototype = {
                         break;
                     case 15:
                     case 16:
-                        object = this.blocks.create(j * this.gridsize + this.gridsize / 2, i * this.gridsize + this.gridsize / 2, 'tunnel');
+                        object = this.blocks.create(j * GameConsts.gridsize + GameConsts.gridsize / 2, i * GameConsts.gridsize + GameConsts.gridsize / 2, 'tunnel');
                         if (this.gameLevel[i][j] == 15) {
                             object.body.checkCollision.up = false;
                             object.body.checkCollision.down = false;
@@ -339,6 +341,7 @@ PhaserGame.prototype = {
         game.physics.arcade.collide(this.player.gameObject, this.blocks, this.blocksHandlerCollide, null, this);
 
         if (!this.player.getBody().velocity.y && !this.player.getBody().velocity.x) {
+            this.player.normalizePosition();
             if (this.cursors.down.isDown) {
                 this.player.setDirection(Phaser.DOWN);
             }
