@@ -100,8 +100,9 @@ var Player = function (player) {
     this.playerSpeed = 600;
 
     this.setDirection = function(direction) {
-        this.gameObject.body.velocity.y = 0;
-        this.gameObject.body.velocity.x = 0;
+
+        this.stop();
+
         switch (direction) {
             case Phaser.UP:
                 this.gameObject.body.velocity.y = -this.playerSpeed;
@@ -134,7 +135,12 @@ var Player = function (player) {
             this.getBody().position.x = Math.floor(i) * GameConsts.gridsize;
             this.getBody().position.y = Math.floor(j) * GameConsts.gridsize;
         }
-    }
+    };
+
+    this.stop = function () {
+        this.gameObject.body.velocity.y = 0;
+        this.gameObject.body.velocity.x = 0;
+    };
 };
 
 var PhaserGame = function (game) {
@@ -143,10 +149,6 @@ var PhaserGame = function (game) {
     this.player = null;
 
     this.results = new Results();
-
-    this.current = Phaser.UP;
-
-    this.player = null;
 
     this.keys = 0;
     this.maxKeys = 0;
@@ -363,6 +365,7 @@ var PhaserGame = function (game) {
             case 'finish':
                 if (this.keys == this.maxKeys) {
                     block.kill();
+                    this.player.stop();
                     this.results.levelRecord(this.level, this.bottomMenu.getTime());
                     this.level++;
                     this.results.lastLevel(this.level);
@@ -482,8 +485,6 @@ PhaserGame.prototype = {
             this.add.sprite(0, 0, 'grid');
             this.swipe = new Swipe(this);
         }
-        this.player.body.velocity.x = 0;
-        this.player.body.velocity.y = 0;
         this.blocks = this.add.group();
         this.blocks.enableBody = true;
         var object;
