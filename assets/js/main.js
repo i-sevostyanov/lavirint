@@ -482,6 +482,8 @@ PhaserGame.prototype = {
             this.add.sprite(0, 0, 'grid');
             this.swipe = new Swipe(this);
         }
+        this.player.body.velocity.x = 0;
+        this.player.body.velocity.y = 0;
         this.blocks = this.add.group();
         this.blocks.enableBody = true;
         var object;
