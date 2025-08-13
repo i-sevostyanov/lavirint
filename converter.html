@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Map JSON Converter</title>
+    <style>
+        body {
+            font-family: monospace;
+            text-align: center;
+            padding: 50px;
+            background: #222;
+            color: #fff;
+        }
+        #dropzone {
+            border: 3px dashed #999;
+            padding: 150px;
+            border-radius: 10px;
+            background: #333;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
+        pre {
+            text-align: left;
+            background: #111;
+            padding: 20px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Перетащи или вставь скопированный файл</h1>
+<div id="dropzone">Перетащи файл или вставь содержимое JSON сюда</div>
+<pre id="output"></pre>
+
+<script>
+    const replace = {
+        1:  7,  2:  6,  3:  5,  4:  4,
+        5:  2,  6:  9,  7:  3,  8:  8,
+        9:  1, 10: 15, 11: 10, 12: 16,
+        13: 11, 14: 12, 15: 13, 16: 14, 17: 10
+    };
+
+    function processJSON(jsonString) {
+        try {
+            const m = JSON.parse(jsonString);
+            let output = "[";
+
+            const layer = m.layers.find(l => l.type === "tilelayer");
+            if (!layer) throw new Error("tilelayer не найден");
+
+            const grid = [];
+            for (let i = 0; i < layer.height; i++) {
+                const start = i * layer.width;
+                const end = start + layer.width;
+                grid.push(layer.data.slice(start, end));
+            }
+
+            grid.forEach((row, i) => {
+                const replacedRow = row.map(v => replace[v] ?? v);
+                output += "\n    " + JSON.stringify(replacedRow);
+                if (i !== grid.length - 1) output += ",";
+            });
+
+            output += "\n]";
+            document.getElementById('output').textContent = output;
+        } catch (err) {
+            alert("Ошибка: " + err.message);
+        }
+    }
+
+    const dropzone = document.getElementById('dropzone');
+
+    dropzone.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+
+    dropzone.addEventListener('drop', e => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = event => processJSON(event.target.result);
+        reader.readAsText(file);
+    });
+
+    // Обработка вставки текста или файла
+    document.addEventListener('paste', e => {
+        if (e.clipboardData.files.length > 0) {
+            // Вставлен файл
+            const file = e.clipboardData.files[0];
+            const reader = new FileReader();
+            reader.onload = event => processJSON(event.target.result);
+            reader.readAsText(file);
+        } else {
+            // Вставлен текст
+            const text = e.clipboardData.getData('text');
+            if (text.trim().startsWith("{") || text.trim().startsWith("[")) {
+                processJSON(text);
+            } else {
+                alert("Буфер обмена не содержит JSON");
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
